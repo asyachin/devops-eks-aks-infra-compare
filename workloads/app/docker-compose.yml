@@ -1,0 +1,73 @@
+
+services:
+  db:
+    image: postgres:13-alpine
+    volumes:
+      - dev-db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASS}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+      args:
+        - DEV=true
+    ports:
+      - "8000:9000"
+    volumes:
+      - ./backend:/app
+      - dev-static-data:/vol/web/static
+      - dev-media-data:/vol/web/media
+    command: >
+      sh -c "python manage.py wait_for_db &&
+             python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:9000"
+    environment:
+      - DB_HOST=db
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DEBUG=1
+      - SECRET_KEY=${DJANGO_SECRET_KEY}
+      - ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+    depends_on:
+      - app
+
+  proxy:
+    build:
+      context: ./proxy
+    restart: unless-stopped
+    ports:
+      - "80:8000"
+    environment:
+      - LISTEN_PORT=8000
+      - APP_HOST=app
+      - APP_PORT=9000
+      - FRONTEND_HOST=frontend
+      - FRONTEND_PORT=3000
+    volumes:
+      - dev-static-data:/vol/static
+      - dev-media-data:/vol/media
+    depends_on:
+      - app
+      - frontend
+
+volumes:
+  dev-db-data:
+  dev-static-data:
+  dev-media-data:
