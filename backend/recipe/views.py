@@ -89,8 +89,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
         try:
             recipe = Recipe.objects.get(pk=pk)
         except Recipe.DoesNotExist:
-            return Response({'error': 'Recipe not found'}, status=status.HTTP_404_NOT_FOUND)
-        serializer = serializers.RecipeDetailSerializer(recipe, context={'request': request})
+            return Response(
+                {'error': 'Recipe not found'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        serializer = serializers.RecipeDetailSerializer(
+            recipe, context={'request': request})
         return Response(serializer.data)
 
     @action(methods=['POST'], detail=True, url_path='upload-image')
