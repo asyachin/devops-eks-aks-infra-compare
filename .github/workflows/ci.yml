@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [dev]
+    branches: [dev, main]
   pull_request:
     branches: [main]
 
@@ -18,10 +18,3 @@ jobs:
   lint:
     name: Lint
     uses: ./.github/workflows/lint.yml
-
-  build-push:
-    name: Build and Push
-    needs: test
-    if: github.event_name == 'push'
-    uses: ./.github/workflows/build-push.yml
-    secrets: inherit
