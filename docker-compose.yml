@@ -1,7 +1,7 @@
 
 services:
   db:
-    image: postgres:13-alpine
+    image: postgres:17-alpine
     volumes:
       - dev-db-data:/var/lib/postgresql/data
     environment:
@@ -45,27 +45,13 @@ services:
   frontend:
     build:
       context: ./frontend
-    depends_on:
-      - app
-
-  proxy:
-    build:
-      context: ./proxy
-    restart: unless-stopped
     ports:
-      - "80:8000"
+      - "80:80"
     environment:
-      - LISTEN_PORT=8000
       - APP_HOST=app
       - APP_PORT=9000
-      - FRONTEND_HOST=frontend
-      - FRONTEND_PORT=3000
-    volumes:
-      - dev-static-data:/vol/static
-      - dev-media-data:/vol/media
     depends_on:
       - app
-      - frontend
 
 volumes:
   dev-db-data:
