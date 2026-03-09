@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Tests
+    uses: ./.github/workflows/test.yml
+
+  lint:
+    name: Lint
+    uses: ./.github/workflows/lint.yml
+
+  build-push:
+    name: Build and Push
+    needs: test
+    if: github.event_name == 'push'
+    uses: ./.github/workflows/build-push.yml
+    secrets: inherit
