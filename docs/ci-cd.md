@@ -6,9 +6,10 @@ The pipeline covers three scenarios:
 
 | Event | Workflows triggered | Result |
 |---|---|---|
-| `git push` → `dev` | test → lint → build-push | Image pushed to Docker Hub with `sha` tag |
-| Pull Request → `main` | test + lint (parallel) | Gate check only, no push |
-| `git tag v*` or manual | test → release | Image pushed with semantic version tag |
+| `git push` → `dev` | test + lint (parallel) | Gate check only, no push |
+| Pull Request → `main` | test + lint (parallel) | Gate check only, blocks merge on failure |
+| Merge → `main` | test + lint (parallel) | Gate check only, no push |
+| **`git tag v*` or manual** | test → release | Image pushed to Docker Hub with version tag |
 
 ---
 
@@ -30,11 +31,10 @@ bugfix/xxx  ───┘
 
 ```
 .github/workflows/
-├── ci.yml           # Entry point: push→dev / PR→main
-├── test.yml         # Reusable: runs Django tests in Docker Compose
-├── lint.yml         # Reusable: runs flake8 natively (fast, no Docker)
-├── build-push.yml   # Reusable: builds and pushes images with sha tag
-└── release.yml      # Versioned release: tag push or manual dispatch
+├── ci.yml        # Entry point: push→dev/main, PR→main — tests + lint only
+├── test.yml      # Reusable: runs Django tests in Docker Compose
+├── lint.yml      # Reusable: runs flake8 natively (fast, no Docker)
+└── release.yml   # Docker Hub push: triggered by git tag v* or manual dispatch
 ```
 
 ### ci.yml — Entry point
@@ -44,13 +44,16 @@ Triggered on:
 - `pull_request` to `main` → runs tests and lint only (no push)
 
 ```
-push → dev
-  ├─ test ──────────────────────────────────────► [pass] → build-push (sha tag)
-  └─ lint ──────────────────────────────────────► [pass/fail: doesn't block push]
-
-PR → main
+push → dev / main
   ├─ test ──────────────────────────────────────► required check
   └─ lint ──────────────────────────────────────► required check
+
+PR → main
+  ├─ test ──────────────────────────────────────► required check (blocks merge)
+  └─ lint ──────────────────────────────────────► required check (blocks merge)
+
+git tag v1.2.3
+  └─ test ──────────────────────────────────────► [pass] → build → Docker Hub: v1.2.3 + latest
 ```
 
 ### test.yml — Tests
@@ -101,14 +104,18 @@ Go to **GitHub → Repository → Settings → Secrets and variables → Actions
 git checkout -b feature/my-feature
 # ... make changes ...
 
-# 2. Push to dev (triggers CI: test + lint + build-push)
+# 2. Push to dev — triggers tests + lint only (no Docker Hub push)
 git checkout dev
 git merge feature/my-feature
 git push origin dev
 
-# 3. Images pushed to Docker Hub:
-#    u745/recipebook-app:a3f9c12d...
-#    u745/recipebook-app:latest
+# 3. Open a Pull Request: feature → dev, then dev → main
+#    GitHub checks: tests + lint must pass before merge is allowed
+
+# 4. Merge to main — triggers build-push
+#    Images pushed to Docker Hub:
+#      u745/recipebook-app:<sha>
+#      u745/recipebook-app:latest
 ```
 
 ---
@@ -192,9 +199,8 @@ argocd app sync recipebook
 
 | Tag format | Source | Use case |
 |---|---|---|
-| `v1.2.3` | Git tag / manual release | **Production / ArgoCD** |
-| `a3f9c12...` (40-char sha) | Every push to `dev` | Dev environment / debugging |
-| `latest` | Last successful push | Quick testing only — never use in production |
+| `v1.2.3` | Git tag / manual release | **Production / ArgoCD — always use this** |
+| `latest` | Last successful release | Quick local testing only — never deploy to cluster |
 
 ---
 
