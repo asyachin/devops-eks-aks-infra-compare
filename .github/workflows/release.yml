@@ -29,21 +29,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Trivy
-        uses: aquasecurity/setup-trivy@v0.2.1
-        with:
-          version: v0.57.0
+      - name: Install Trivy
+        run: |
+          sudo apt-get install -y wget apt-transport-https gnupg
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" | sudo tee /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update -qq
+          sudo apt-get install -y trivy
 
       - name: Run Trivy vulnerability scanner in fs mode
-        uses: aquasecurity/trivy-action@0.33.1
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          trivy-config: trivy.yaml
-          format: json
-          exit-code: '1'
-          severity: CRITICAL
-          skip-setup-trivy: true
+        run: |
+          trivy fs . \
+            --config trivy.yaml \
+            --format json \
+            --exit-code 1 \
+            --severity CRITICAL
 
       - name: Resolve version
         id: version
