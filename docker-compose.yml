@@ -15,7 +15,7 @@ services:
       retries: 10
 
   app:
-    image: recipebook-app:latest
+    image: receipebook-app:latest
     build:
       context: .
       dockerfile: ./backend/Dockerfile
