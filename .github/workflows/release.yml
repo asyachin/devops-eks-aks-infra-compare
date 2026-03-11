@@ -29,6 +29,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Run Trivy vulnerability scanner in fs mode
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          trivy-config: trivy.yaml
+          format: json
+          exit-code: '1'
+          severity: CRITICAL
+          secret-config: config/trivy/secret.yaml
+
       - name: Resolve version
         id: version
         run: |
@@ -59,15 +70,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Scan backend image for vulnerabilities
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/receipebook-app:${{ steps.version.outputs.tag }}
-          format: table
-          exit-code: 1
-          severity: CRITICAL,HIGH
-          ignore-unfixed: true
-
       - name: Build and push frontend
         uses: docker/build-push-action@v6
         with:
@@ -80,11 +82,4 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Scan frontend image for vulnerabilities
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/recipebook-frontend:${{ steps.version.outputs.tag }}
-          format: table
-          exit-code: 1
-          severity: CRITICAL,HIGH
-          ignore-unfixed: true
+
