@@ -29,6 +29,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Trivy
+        uses: aquasecurity/setup-trivy@v0.2.1
+        with:
+          version: v0.57.0
+
       - name: Run Trivy vulnerability scanner in fs mode
         uses: aquasecurity/trivy-action@0.33.1
         with:
@@ -38,7 +43,7 @@ jobs:
           format: json
           exit-code: '1'
           severity: CRITICAL
-          secret-config: config/trivy/secret.yaml
+          skip-setup-trivy: true
 
       - name: Resolve version
         id: version
