@@ -22,8 +22,9 @@ server {
         client_max_body_size 10M;
     }
 
-    # Media files served directly by Nginx from the shared volume
-    location /static/media/ {
+    # Media files served directly by Nginx from the shared volume.
+    # ^~ prevents the regex location below from intercepting image URLs.
+    location ^~ /static/media/ {
         alias /vol/web/media/;
     }
 
