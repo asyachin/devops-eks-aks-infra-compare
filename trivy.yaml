@@ -1,0 +1,2 @@
+secret:
+  config: config/trivy/secret.yaml
