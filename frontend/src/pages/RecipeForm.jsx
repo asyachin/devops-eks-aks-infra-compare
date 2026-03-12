@@ -77,6 +77,8 @@ export default function RecipeForm() {
     try {
       const res = await recipeApi.uploadImage(recipeId, fd);
       setCurrentImage(res.data.image);
+    } catch {
+      throw new Error('Recipe saved, but photo upload failed. You can re-upload the photo by editing the recipe.');
     } finally {
       setUploadingImg(false);
     }
@@ -119,10 +121,17 @@ export default function RecipeForm() {
         const res = await recipeApi.create(payload);
         recipeId = res.data.id;
       }
-      // Upload image if a new file was selected
+
       if (imageFile) {
-        await uploadImage(recipeId, imageFile);
+        try {
+          await uploadImage(recipeId, imageFile);
+        } catch (imgErr) {
+          setError(imgErr.message);
+          navigate(`/recipes/${recipeId}`);
+          return;
+        }
       }
+
       navigate(`/recipes/${recipeId}`);
     } catch (err) {
       const d = err.response?.data;
