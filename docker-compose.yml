@@ -48,6 +48,8 @@ services:
       context: ./frontend
     ports:
       - "80:80"
+    volumes:
+      - dev-media-data:/vol/web/media:ro
     environment:
       - APP_HOST=app
       - APP_PORT=9000

@@ -22,7 +22,12 @@ server {
         client_max_body_size 10M;
     }
 
-    # Media and static files served by Django (DEBUG mode)
+    # Media files served directly by Nginx from the shared volume
+    location /static/media/ {
+        alias /vol/web/media/;
+    }
+
+    # Other static files (admin CSS/JS, etc.) proxied to Django
     location /static {
         proxy_pass http://${APP_HOST}:${APP_PORT};
     }
