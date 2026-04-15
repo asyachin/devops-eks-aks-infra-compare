@@ -70,8 +70,8 @@ jobs:
           file: ./backend/Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/receipebook-app:${{ steps.version.outputs.tag }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/receipebook-app:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/recipebook-app:${{ steps.version.outputs.tag }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/recipebook-app:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
